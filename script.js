@@ -5,7 +5,7 @@ const FPS = 60
 var gameStarted = false
 var gameOver = false
 const enemiesMaxCount = 75 // 75
-var enemiesStarting = 15 // 180
+var enemiesStarting = 180 // 180
 var frames = 0
 
 function checkCollision(obj1, obj2) {
@@ -348,7 +348,7 @@ class Weapon extends ObjectTime {
             this.active = false
             this.bullets.push(new Bullet(this.master_root, this.owner.x+this.owner.sprites.size/2,
                 this.owner.y+this.owner.center, 10, this.owner.dmg, Bullet_sprites, this.angle, this.owner.on_right, this.owner))
-            setTimeout(() => {this.active = true}, 30)
+            setTimeout(() => {this.active = true}, 100)
         }
     }
 
