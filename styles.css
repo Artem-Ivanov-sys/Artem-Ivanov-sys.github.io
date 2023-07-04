@@ -1,0 +1,15 @@
+body {
+    background-color: black;
+}
+
+.wrapper {
+    transform-origin: top;
+    margin: auto;
+    width: 640px;
+    height: 320px;
+}
+
+#field {
+    width: 100%;
+    height: 100%;
+}
