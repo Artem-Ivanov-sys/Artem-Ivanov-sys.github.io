@@ -1,0 +1,8 @@
+# JSGameTest
+This game is made with pure JS. You can choose one of given guns and then you need to protect from enemies.
+This game is only for Desktop.
+To start game just open `index.html` file in you browser.
+
+Controls:
+  - Move: `W` `A` `S` `D`
+  - Attack: `LMB` or `space`
