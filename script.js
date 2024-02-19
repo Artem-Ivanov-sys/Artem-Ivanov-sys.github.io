@@ -6,6 +6,7 @@ var gameStarted = false
 var gameOver = false
 const enemiesMaxCount = 75 // 75
 var enemiesStarting = 180 // 180
+var activated_enemies = [true, true, false]
 var frames = 0
 
 function checkCollision(obj1, obj2) {
@@ -65,12 +66,27 @@ const WIDTH = canvas.width,
         src:"sprites/girl1.png",
         img: new Image()
     },
-    Enemy_sprites = {
+    Enemy_1_sprites = {
         size:34,
         count:3,
         row:2,
         src:"sprites/enemy1.png",
         img: new Image(src="sprites/enemy1.png")
+    },
+    Enemy_2_sprites = {
+        size:40,
+        count:3,
+        row:2,
+        src:"sprites/enemy2.png",
+        img: new Image(src="sprites/enemy2.png")
+    },
+    Shield_sprites = {
+        size:40,
+        count:1,
+        row:2,
+        health_line: [13, 14, 14],
+        src:"sprites/shield.png",
+        img: new Image(src="sprites/shield.png")
     },
     Coin_sprites = {
         size:22,
@@ -88,6 +104,15 @@ const WIDTH = canvas.width,
         src:"sprites/m16.png",
         img: new Image(src="sprites/m16.png")
     },
+    Weapon_2_sprites = {
+        size:52,
+        sizeY:18,
+        center_params: [22, 8],
+        count:1,
+        row:1,
+        src:"sprites/m16.png",
+        img: new Image(src="sprites/m16.png")
+    },
     Bullet_sprites = {
         size:2,
         src:"sprites/m16_bullet.png",
@@ -95,7 +120,9 @@ const WIDTH = canvas.width,
     }
 
 Player_sprites.img.src = Player_sprites.src
-Enemy_sprites.img.src = Enemy_sprites.src
+Enemy_1_sprites.img.src = Enemy_1_sprites.src
+Enemy_2_sprites.img.src = Enemy_2_sprites.src
+Shield_sprites.img.src = Shield_sprites.src
 Coin_sprites.img.src = Coin_sprites.src
 Weapon_sprites.img.src = Weapon_sprites.src
 Bullet_sprites.img.src = Bullet_sprites.src
@@ -138,9 +165,8 @@ class Player {
         this.weapon = null
         this.center = center
         this.on_right = true
-        this.aim = .8
         
-        this.coins = 0
+        this.coins = 28
 
         this.player = sprites.img
     }
@@ -206,11 +232,12 @@ class Enemy {
         this.y = y
         this.dmg = dmg
         this.health = {cur: max_health, max: max_health}
-        this.speed = speed + Math.floor(Math.random()*10-4)/100
+        this.speed = speed
         this.sprites = sprites
         this.anim = 0
         this.walking = {x: 0, y: 0}
         this.weapon = null
+        this.aimed = .8
 
         this.enemy = new Image(sprites.size, sprites.size)
         this.enemy.src = sprites.src
@@ -241,6 +268,11 @@ class Enemy {
         }
     }
 
+    attacked(from) {
+        this.health.cur = Math.max(0, this.health.cur-from.dmg)
+        return true
+    }
+
     cooldown() {
         let dmg = this.dmg
         this.dmg = 0
@@ -259,6 +291,113 @@ class Enemy {
             this.sprites.size, this.sprites.size,
             Math.floor(this.x), Math.floor(this.y), this.sprites.size, this.sprites.size
         )
+        if (this.health.cur!=this.health.max) {
+            this.master_root.fillStyle = "black"
+            this.master_root.fillRect(this.x+this.sprites.size/4-1, this.y-4,
+                this.sprites.size-this.sprites.size/2+2, 5)
+            this.master_root.fillStyle = "#FF5B5B"
+            this.master_root.fillRect(this.x+this.sprites.size/4, this.y-3,
+                this.sprites.size-this.sprites.size/2, 3)
+            this.master_root.fillStyle = "#1AB911"
+            this.master_root.fillRect(this.x+this.sprites.size/4, this.y-3,
+                this.sprites.size * 1/2 * this.health.cur / this.health.max, 3)
+        }
+    }
+}
+
+class Enemy2 {
+    constructor(master_root, x, y, speed, max_health, dmg, sprites, shield) {
+        this.master_root = master_root
+        this.x = x
+        this.y = y
+        this.dmg = dmg
+        this.health = {cur: max_health, max: max_health, shield: {cur: 500, max: 500}}
+        this.speed = speed
+        this.sprites = sprites
+        this.shield = shield
+        this.anim = 0
+        this.walking = {x: 0, y: 0}
+        this.weapon = null
+        this.aim = 1
+
+        this.enemy = new Image(sprites.size, sprites.size)
+        this.enemy.src = sprites.src
+    }
+
+    walk(dir) {
+        let absVal = Math.sqrt(dir[0]**2 + dir[1]**2)
+        this.walking.x = this.speed * dir[0] / absVal
+        this.walking.y = this.speed * dir[1] / absVal
+        this.x += this.walking.x
+        this.y += this.walking.y
+    }
+
+    attack(player) {
+        if (Math.sqrt((this.x-player.x)**2+(this.y-player.y)**2) > this.sprites.size / 2) {
+            let dir = [player.x - this.x, player.y - this.y]
+            this.walk(dir)
+        } else {this.walking.x = this.walking.y = 0}
+        if (this.dmg) {
+            if (Math.sqrt((player.x-this.x)**2+(player.y-this.y)**2) < this.sprites.size / 2) {
+                player.health.cur = Math.max(0, player.health.cur-this.dmg)
+                if (player.health.cur == 0) {
+                    gameStarted = false
+                    gameOver = true
+                }
+                this.cooldown()
+            }
+        }
+    }
+
+    attacked(from) {
+        if (from.y - this.y < this.shield.health_line[1] || this.health.shield.cur == 0) {
+            this.health.cur = Math.max(0, this.health.cur-from.dmg)
+            return true
+        } else {
+            this.health.shield.cur = Math.max(0, this.health.shield.cur-from.dmg)
+            this.health.cur = Math.max(0, this.health.cur-from.dmg/20)
+            return false
+        }
+    }
+
+    cooldown() {
+        let dmg = this.dmg
+        this.dmg = 0
+        setTimeout(() => {this.dmg = dmg}, 1500)
+    }
+
+    die(coins) {
+        coins.push(new Coin(this.master_root, Math.floor(this.x+(this.sprites.size-Coin_sprites.size)/2),
+            Math.floor(this.y+this.sprites.size-Coin_sprites.size), Coin_sprites))
+    }
+
+    render() {
+        this.master_root.drawImage(
+            this.enemy, this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.walking.x>=0))%this.sprites.row),
+            this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.walking.x>=0))/this.sprites.row),
+            this.sprites.size, this.sprites.size,
+            Math.floor(this.x), Math.floor(this.y), this.sprites.size, this.sprites.size
+        )
+        if (this.health.shield.cur) {
+            this.master_root.drawImage(
+                this.shield.img, this.sprites.size*(this.health.shield.cur < this.health.shield.max/2),
+                this.sprites.size*(this.walking.x>=0),
+                this.sprites.size, this.sprites.size,
+                Math.floor(this.x), Math.floor(this.y), this.sprites.size, this.sprites.size
+            )
+            let delta_coords
+            if (this.health.shield.cur!=this.health.shield.max) {
+                this.master_root.fillStyle = "black"
+                this.master_root.fillRect(this.x+this.shield.health_line[0]-1, this.y+this.shield.health_line[1]-4,
+                    this.shield.health_line[2] * 1/2+2, 5)
+                this.master_root.fillStyle = "#FF5B5B"
+                this.master_root.fillRect(this.x+this.shield.health_line[0], this.y+this.shield.health_line[1]-3,
+                    this.shield.health_line[2] * 1/2, 3)
+                this.master_root.fillStyle = "#1AB911"
+                this.master_root.fillRect(this.x+this.shield.health_line[0], this.y+this.shield.health_line[1]-3,
+                    this.shield.health_line[2] * 1/2 * this.health.shield.cur / this.health.shield.max, 3)
+            }
+        }
         if (this.health.cur!=this.health.max) {
             this.master_root.fillStyle = "black"
             this.master_root.fillRect(this.x+this.sprites.size/4-1, this.y-4,
@@ -303,7 +442,7 @@ class Bullet {
         targets.forEach((elem, i) => {
             if (this.x>elem.x && this.y>elem.y && this.x<elem.x+elem.sprites.size && this.y<elem.y+elem.sprites.size) {
                 if (this.ignore.includes(elem)) {}
-                else if (Math.random()>this.player.aim) {
+                else if (Math.random()>elem.aimed) {
                     this.ignore.push(elem)
                 } else {
                     ans = [elem, i]
@@ -514,7 +653,11 @@ function render() {
         })
         context.globalAlpha = 0.2
         renderList.forEach((elem) => {
-            context.drawImage(shadow, elem.x+(elem.sprites.size-34)/2, elem.y, 34, 36)
+            if (["Coin", "Weapon"].includes(elem.__proto__.constructor.name)) {
+                context.drawImage(shadow, elem.x+(elem.sprites.size-34)/2, elem.y, 34, 36)
+            } else {
+                context.drawImage(shadow, elem.x+(elem.sprites.size-34)/2, elem.y+elem.sprites.size-34, 34, 36)
+            }
         })
         context.globalAlpha = 1
         renderList.forEach((elem) => {
@@ -563,12 +706,15 @@ function update() {
                 }
             let hit = elem.attack(enemies)
             if (hit != false) {
-                hit[0].health.cur = Math.max(0, hit[0].health.cur-elem.dmg)
-                if (hit[0].health.cur == 0) {
-                    hit[0].die(coins)
-                    enemies.splice(hit[1], 1)
+                if (hit[0].attacked(elem)) {
+                    if (hit[0].health.cur == 0) {
+                        hit[0].die(coins)
+                        enemies.splice(hit[1], 1)
+                    }
+                    return false
+                } else {
+                    elem.angle = Math.PI - elem.angle
                 }
-                return false
             }
             return true
         })
@@ -586,34 +732,73 @@ function update() {
         enemiesProceed()
     }
     if (player.coins == 10) {
-        enemiesStarting = 120
-    } else if (player.coins == 30) {
         enemiesStarting = 100
+    } else if (player.coins == 30) {
+        enemiesStarting = 70
     } else if (player.coins == 80) {
-        enemiesStarting = 80
+        enemiesStarting = 50
     } else if (player.coins == 150) {
-        enemiesStarting = 40
+        enemiesStarting = 30
     } else if (player.coins == 300) {
         enemiesStarting = 20
     }
 }
 
 function enemiesProceed() {
+    function spawn_en_1(side) {
+        if (side == 0) {
+            enemies.push(new Enemy(context, Math.floor(Math.random()*(2*Enemy_1_sprites.size+WIDTH)-Enemy_1_sprites.size),
+                -Enemy_1_sprites.size, 1.5, 50, 10, Enemy_1_sprites))
+        } else if (side == 1) {
+            enemies.push(new Enemy(context, WIDTH,
+                Math.floor(Math.random()*(2*Enemy_1_sprites.size+HEIGHT)-Enemy_1_sprites.size), 1.5, 50, 10, Enemy_1_sprites))
+        } else if (side == 2) {
+            enemies.push(new Enemy(context, Math.floor(Math.random()*(2*Enemy_1_sprites.size+WIDTH)-Enemy_1_sprites.size),
+                HEIGHT, 1.5, 50, 10, Enemy_1_sprites))
+        } else if (side == 3) {
+            enemies.push(new Enemy(context, -Enemy_1_sprites.size,
+                Math.floor(Math.random()*(2*Enemy_1_sprites.size+HEIGHT)-Enemy_1_sprites.size), 1.5, 50, 10, Enemy_1_sprites))
+        }
+    }
+
+    function spawn_en_2(side) {
+        if (side == 0) {
+            enemies.push(new Enemy2(context, Math.floor(Math.random()*(2*Enemy_2_sprites.size+WIDTH)-Enemy_2_sprites.size),
+                -Enemy_2_sprites.size, 1, 100, 40, Enemy_2_sprites, Shield_sprites))
+        } else if (side == 1) {
+            enemies.push(new Enemy2(context, WIDTH,
+                Math.floor(Math.random()*(2*Enemy_2_sprites.size+HEIGHT)-Enemy_2_sprites.size),
+                1, 100, 40, Enemy_2_sprites, Shield_sprites))
+        } else if (side == 2) {
+            enemies.push(new Enemy2(context, Math.floor(Math.random()*(2*Enemy_1_sprites.size+WIDTH)-Enemy_2_sprites.size),
+                HEIGHT, 1, 100, 40, Enemy_2_sprites, Shield_sprites))
+        } else if (side == 3) {
+            enemies.push(new Enemy2(context, -Enemy_2_sprites.size,
+                Math.floor(Math.random()*(2*Enemy_2_sprites.size+HEIGHT)-Enemy_2_sprites.size),
+                1, 100, 40, Enemy_2_sprites, Shield_sprites))
+        }
+    }
+
+    function spawn_en_3(side) {}
+ 
     if (frames > enemiesStarting) {
         if (enemies.length < enemiesMaxCount) {
             let side = Math.floor(Math.random()*4)
-            if (side == 0) {
-                enemies.push(new Enemy(context, Math.floor(Math.random()*(2*Enemy_sprites.size+WIDTH)-Enemy_sprites.size),
-                    -Enemy_sprites.size, 1.5, 100, 10, Enemy_sprites))
-            } else if (side == 1) {
-                enemies.push(new Enemy(context, WIDTH,
-                    Math.floor(Math.random()*(2*Enemy_sprites.size+HEIGHT)-Enemy_sprites.size), 1.5, 100, 10, Enemy_sprites))
-            } else if (side == 2) {
-                enemies.push(new Enemy(context, Math.floor(Math.random()*(2*Enemy_sprites.size+WIDTH)-Enemy_sprites.size),
-                    HEIGHT, 1.5, 100, 10, Enemy_sprites))
-            } else if (side == 3) {
-                enemies.push(new Enemy(context, -Enemy_sprites.size,
-                    Math.floor(Math.random()*(2*Enemy_sprites.size+HEIGHT)-Enemy_sprites.size), 1.5, 100, 10, Enemy_sprites))
+            let type = Math.random()
+            if (type < .7) {
+                spawn_en_1(side)
+            } else if (type < .9) {
+                if (activated_enemies[1]) {
+                    spawn_en_2(side)
+                } else {
+                    spawn_en_1(side)
+                }
+            } else {
+                if (activated_enemies[2]) {
+                    spawn_en_3(side)
+                } else {
+                    spawn_en_1(side)
+                }
             }
         }
 
@@ -625,7 +810,7 @@ function enemiesProceed() {
         if (Math.abs(e.walking.x)||Math.abs(e.walking.y)) {
             e.anim = Math.max(1, e.anim+.08)
         } else {e.anim=0}
-        e.anim = e.anim>=Enemy_sprites.count ? 1 : e.anim
+        e.anim = e.anim>=Enemy_1_sprites.count ? 1 : e.anim
     })
     for (let i = 0; i < enemies.length-1; i++) {
         for (let j = i+1; j < enemies.length; j++) {
