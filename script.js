@@ -99,6 +99,7 @@ const WIDTH = canvas.width,
         size:52,
         sizeY:18,
         center_params: [22, 8],
+        bullet_factor: [0, 0],
         count:1,
         row:1,
         src:"sprites/m16.png",
@@ -106,12 +107,13 @@ const WIDTH = canvas.width,
     },
     Weapon_2_sprites = {
         size:52,
-        sizeY:18,
-        center_params: [22, 8],
+        sizeY:22,
+        center_params: [10, 6],
+        bullet_factor: [0, 3],
         count:1,
         row:1,
-        src:"sprites/m16.png",
-        img: new Image(src="sprites/m16.png")
+        src:"sprites/m134.png",
+        img: new Image(src="sprites/m134.png")
     },
     Bullet_sprites = {
         size:2,
@@ -125,6 +127,7 @@ Enemy_2_sprites.img.src = Enemy_2_sprites.src
 Shield_sprites.img.src = Shield_sprites.src
 Coin_sprites.img.src = Coin_sprites.src
 Weapon_sprites.img.src = Weapon_sprites.src
+Weapon_2_sprites.img.src = Weapon_2_sprites.src
 Bullet_sprites.img.src = Bullet_sprites.src
 
 function NewCursor() {
@@ -158,6 +161,8 @@ class Player {
         this.y = y
         this.dmg = dmg
         this.health = {cur: max_health, max: max_health}
+        this.shield_health = {cur: 0, max: 200}
+        this.shield = null
         this.speed = speed
         this.sprites = sprites
         this.anim = 0
@@ -172,16 +177,18 @@ class Player {
     }
 
     walk() {
+        let slowing = this.weapon!=null?this.weapon.slowing:0
+        slowing += this.shield!=null?.2:0
         if (this.walking.y > 0) {
-            this.y = Math.max(this.y - this.speed, 0)
+            this.y = Math.max(this.y - this.speed * (1 - slowing), 0)
         } else if (this.walking.y < 0) {
-            this.y = Math.min(this.y + this.speed, HEIGHT-this.sprites.size)
+            this.y = Math.min(this.y + this.speed * (1 - slowing), HEIGHT-this.sprites.size)
         }
 
         if (this.walking.x > 0) {
-            this.x = Math.min(this.x + this.speed, WIDTH-this.sprites.size)
+            this.x = Math.min(this.x + this.speed * (1 - slowing), WIDTH-this.sprites.size)
         } else if (this.walking.x < 0) {
-            this.x = Math.max(this.x - this.speed, 0)
+            this.x = Math.max(this.x - this.speed * (1 - slowing), 0)
         }
 
         if (!this.weapon) {
@@ -212,16 +219,32 @@ class Player {
         })
     }
 
+    render_shield() {
+        if (this.shield_health.cur) {
+            this.master_root.drawImage(
+                this.shield.img, this.shield.size*(this.shield_health.cur < this.shield_health.max/2),
+                this.shield.size*(this.on_right),
+                this.shield.size, this.shield.size,
+                Math.floor(this.x - (this.shield.size - this.sprites.size)/2),
+                Math.floor(this.y - (this.shield.size - this.sprites.size)/2), this.shield.size, this.shield.size
+            )
+        }
+    }
+
     render() {
         this.master_root.drawImage(
             this.player, this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.on_right))%this.sprites.row),
             this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.on_right))/this.sprites.row),
             this.sprites.size, this.sprites.size,
-            this.x, this.y, this.sprites.size, this.sprites.size
+            Math.floor(this.x), Math.floor(this.y), this.sprites.size, this.sprites.size
         )
+        if (this.on_right) this.render_shield()
         if (this.weapon) {
             this.weapon.render()
         }
+        context.globalAlpha = 0.8
+        if (!this.on_right) this.render_shield()
+        context.globalAlpha = 1
     }
 }
 
@@ -258,7 +281,11 @@ class Enemy {
         } else {this.walking.x = this.walking.y = 0}
         if (this.dmg) {
             if (Math.sqrt((player.x-this.x)**2+(player.y-this.y)**2) < this.sprites.size / 2) {
-                player.health.cur = Math.max(0, player.health.cur-this.dmg)
+                if (player.shield == null) player.health.cur = Math.max(0, player.health.cur-this.dmg)
+                else {
+                    player.shield_health.cur = Math.max(0, player.shield_health.cur-this.dmg)
+                    if (player.shield_health.cur == 0) player.shield = null
+                }
                 if (player.health.cur == 0) {
                     gameStarted = false
                     gameOver = true
@@ -339,7 +366,11 @@ class Enemy2 {
         } else {this.walking.x = this.walking.y = 0}
         if (this.dmg) {
             if (Math.sqrt((player.x-this.x)**2+(player.y-this.y)**2) < this.sprites.size / 2) {
-                player.health.cur = Math.max(0, player.health.cur-this.dmg)
+                if (player.shield == null) player.health.cur = Math.max(0, player.health.cur-this.dmg)
+                else {
+                    player.shield_health.cur = Math.max(0, player.shield_health.cur-this.dmg)
+                    if (player.shield_health.cur == 0) player.shield = null
+                }
                 if (player.health.cur == 0) {
                     gameStarted = false
                     gameOver = true
@@ -355,7 +386,7 @@ class Enemy2 {
             return true
         } else {
             this.health.shield.cur = Math.max(0, this.health.shield.cur-from.dmg)
-            this.health.cur = Math.max(0, this.health.cur-from.dmg/20)
+            this.health.cur = Math.max(0, this.health.cur-from.dmg/30)
             return false
         }
     }
@@ -369,6 +400,12 @@ class Enemy2 {
     die(coins) {
         coins.push(new Coin(this.master_root, Math.floor(this.x+(this.sprites.size-Coin_sprites.size)/2),
             Math.floor(this.y+this.sprites.size-Coin_sprites.size), Coin_sprites))
+        if (this.health.shield.cur > this.health.shield.max / 2) {
+            if (Math.random() > 0.98) {
+                weapons.push(new Shield(this.master_root, Math.floor(this.x+(this.sprites.size-Shield_sprites.size)/2),
+                    Math.floor(this.y+this.sprites.size-Shield_sprites.size), Shield_sprites))
+            }
+        }
     }
 
     render() {
@@ -385,7 +422,7 @@ class Enemy2 {
                 this.sprites.size, this.sprites.size,
                 Math.floor(this.x), Math.floor(this.y), this.sprites.size, this.sprites.size
             )
-            let delta_coords
+            // let delta_coords
             if (this.health.shield.cur!=this.health.shield.max) {
                 this.master_root.fillStyle = "black"
                 this.master_root.fillRect(this.x+this.shield.health_line[0]-1, this.y+this.shield.health_line[1]-4,
@@ -409,6 +446,28 @@ class Enemy2 {
             this.master_root.fillRect(this.x+this.sprites.size/4, this.y-3,
                 this.sprites.size * 1/2 * this.health.cur / this.health.max, 3)
         }
+    }
+}
+
+class Shield extends ObjectTime {
+    constructor(master_root, x, y, sprites) {
+        super()
+        this.master_root = master_root
+        this.x = x
+        this.y = y
+        this.sprites = sprites
+        this.anim = 0
+
+        this.shield = sprites.img
+    }
+
+    render() {
+        this.master_root.drawImage(
+            this.shield, this.sprites.size*Math.floor(this.anim%this.sprites.row),
+            this.sprites.size*Math.floor(this.anim/this.sprites.row),
+            this.sprites.size, this.sprites.size, this.x-1,
+                Math.floor(this.y+3*Math.sin((this.startedTime-performance.now())/500)), this.sprites.size, this.sprites.size
+        )
     }
 }
 
@@ -462,7 +521,7 @@ class Bullet {
 }
 
 class Weapon extends ObjectTime {
-    constructor(master_root, x, y, center_params, sprites, angle, owner, shakeMod, scale=.8) {
+    constructor(master_root, x, y, center_params, sprites, angle, owner, shakeMod, slowing=0, delay=0, scattering=0, scale=.8) {
         super()
         this.master_root = master_root
         this.x = x
@@ -475,6 +534,10 @@ class Weapon extends ObjectTime {
         this.bullets = []
         this.scale = scale
         this.onAttack = false
+        this.scattering = scattering
+        this.slowing = slowing
+        this.delay = delay
+        console.log(this.slowing, this.delay)
 
         this.weapon = sprites.img
         this.shakeMod = this.shakeMod.bind(shakeMod)
@@ -485,9 +548,13 @@ class Weapon extends ObjectTime {
     attack() {
         if (this.active) {
             this.active = false
-            this.bullets.push(new Bullet(this.master_root, this.owner.x+this.owner.sprites.size/2,
-                this.owner.y+this.owner.center, 10, this.owner.dmg, Bullet_sprites, this.angle, this.owner.on_right, this.owner))
-            setTimeout(() => {this.active = true}, 100)
+            this.bullets.push(new Bullet(this.master_root, this.owner.x+this.owner.sprites.size/2 + 
+                this.sprites.bullet_factor[0]*Math.cos(this.angle) - this.sprites.bullet_factor[1]*Math.sin(this.angle),
+                this.owner.y+this.owner.center + 
+                this.sprites.bullet_factor[0]*Math.sin(this.angle) + this.sprites.bullet_factor[1]*Math.cos(this.angle),
+                10, this.owner.dmg, Bullet_sprites, this.angle + (Math.random()*2*this.scattering - this.scattering) * Math.PI / 180,
+                this.owner.on_right, this.owner))
+            setTimeout(() => {this.active = true}, this.delay)
         }
     }
 
@@ -566,6 +633,26 @@ class Coin extends ObjectTime {
     }
 }
 
+class Control extends ObjectTime {
+    constructor(master_root, x, y, name) {
+        super()
+        this.master_root = master_root
+        this.x = x
+        this.y = y
+        this.name = name
+    }
+
+    render() {
+        this.master_root.fillStyle = "#777"
+        this.master_root.fillRect(this.x-10, this.y-10, 20, 20)
+        this.master_root.fillStyle = "#bbb"
+        this.master_root.fillRect(this.x-8, this.y-8, 16, 16)
+        this.master_root.fillStyle = "#000"
+        context.font = "14px monospace"
+        context.fillText(this.name, this.x-3, this.y+3)
+    }
+}
+
 const shadow = new Image(34, 36)
 shadow.src = "sprites/shadow.png"
 const background = new Image(WIDTH, HEIGHT)
@@ -574,7 +661,14 @@ background.src = "sprites/background.png"
 var player = new Player(context, WIDTH/2, HEIGHT/2, 2, 100, 10, Player_sprites, 21)
 var coins = []
 var enemies = []
-var weapons = [new Weapon(context, WIDTH/2, HEIGHT/3, Weapon_sprites.center_params, Weapon_sprites, () => {})]
+var controls = []
+var weapons = [new Weapon(context, WIDTH/2, HEIGHT/3, Weapon_2_sprites.center_params, Weapon_2_sprites, undefined, undefined,
+                () => {}, .3, 50, 3),
+                new Weapon(context, WIDTH/2+100, HEIGHT/3, Weapon_sprites.center_params, Weapon_sprites, undefined, undefined, () => {}, 0, 100),
+                new Shield(context, WIDTH/2-40, HEIGHT/3, Shield_sprites)]
+var origin = ""
+// var weapons = [new Weapon(context, WIDTH/2, HEIGHT/3, Weapon_sprites.center_params, Weapon_sprites, undefined, undefined, () => {}, 0, 100),
+//                 new Shield(context, WIDTH/2-40, HEIGHT/3, Shield_sprites)]
 var startTime = performance.now()
 
 window.addEventListener("keydown", (e) => {
@@ -590,6 +684,29 @@ window.addEventListener("keydown", (e) => {
     }
     if (e.key == " ") {
         player.onAttack = true
+    }
+    if (e.key == "f") {
+        console.log("origin >>>> "+origin)
+        if (origin == "weapon") {
+            console.log("origin triggered")
+            weapons.forEach((elem, i) => {
+                if (Math.sqrt((elem.x-player.x)**2 + (elem.y-player.y)**2) < player.sprites.size/2) {
+                    if (!(elem instanceof Shield)) {
+                        console.log("Weapon picked")
+                        drop = player.weapon
+                        elem.owner = player
+                        player.weapon = elem
+                        weapons.splice(i, 1)
+                        weapons.push(drop)
+                        weapons[weapons.length-1].x = player.x
+                        weapons[weapons.length-1].y = player.y
+                        weapons[weapons.length-1].owner = null
+                        weapons[weapons.length-1].angle = 0
+                    }
+                }
+            })
+            origin = ""
+        }
     }
 })
 
@@ -674,6 +791,17 @@ function render() {
         context.fillRect(WIDTH-5-100, 5, 100, Coin_sprites.size)
         context.fillStyle = "#1AB911"
         context.fillRect(WIDTH-5-100, 5, Math.max(0, Math.floor(player.health.cur/player.health.max*100)), Coin_sprites.size)
+        if (player.shield!=null) {
+            context.font = "13px monospace";
+            context.fillStyle = "white"
+            context.fillText("ARM", WIDTH-35-100, Coin_sprites.size*1.75 + 2.5)
+            context.fillStyle = "#939393"
+            context.fillRect(WIDTH-5-100, 10 + Coin_sprites.size, 100, Coin_sprites.size/2)
+            context.fillStyle = "#1192b9"
+            context.fillRect(WIDTH-5-100, 10 + Coin_sprites.size, 
+                Math.max(0, Math.floor(player.shield_health.cur/player.shield_health.max*100)), Coin_sprites.size/2)
+        }
+        controls.forEach((i) => i.render())
         frames++
 
         startTime = performance.now()
@@ -719,13 +847,29 @@ function update() {
             return true
         })
     }
-    weapons.forEach((elem) => {
+    controls.pop()
+    origin = ""
+    weapons.forEach((elem, i) => {
         if (Math.sqrt((elem.x-player.x)**2 + (elem.y-player.y)**2) < player.sprites.size/2) {
-            console.log("Weapon picked")
-            gameStarted = true
-            elem.owner = player
-            player.weapon = elem
-            weapons.splice(0, 1)
+            if (!(elem instanceof Shield)) {
+                if (player.weapon == null) {
+                    console.log("Weapon picked")
+                    gameStarted = true
+                    elem.owner = player
+                    player.weapon = elem
+                    weapons.splice(i, 1)
+                    origin = ""
+                } else {
+                    origin = "weapon"
+                    controls.push(new Control(context, elem.x+Math.floor(elem.sprites.size/2), elem.y-elem.sprites.sizeY, "F"))
+                }
+            } else {
+                console.log("Shield picked")
+                player.shield = elem.sprites
+                player.shield_health.cur = 200
+                weapons.splice(i, 1)
+                origin = ""
+            }
         }
     })
     if (gameStarted) {
@@ -734,9 +878,9 @@ function update() {
     if (player.coins == 10) {
         enemiesStarting = 100
     } else if (player.coins == 30) {
-        enemiesStarting = 70
+        enemiesStarting = 60
     } else if (player.coins == 80) {
-        enemiesStarting = 50
+        enemiesStarting = 40
     } else if (player.coins == 150) {
         enemiesStarting = 30
     } else if (player.coins == 300) {
@@ -785,7 +929,7 @@ function enemiesProceed() {
         if (enemies.length < enemiesMaxCount) {
             let side = Math.floor(Math.random()*4)
             let type = Math.random()
-            if (type < .7) {
+            if (type < .2) {
                 spawn_en_1(side)
             } else if (type < .9) {
                 if (activated_enemies[1]) {

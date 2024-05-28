@@ -3,8 +3,8 @@ function Resize(event) {
     var block = document.getElementsByClassName("wrapper")[0],
         blockWidth = block.offsetWidth,
         blockHeight = block.offsetHeight,
-        windowWidth = window.innerWidth * 5 / 6,
-        windowHeight = window.innerHeight * 5 / 6
+        windowWidth = window.innerWidth * 0.95,
+        windowHeight = window.innerHeight * .95
     if (block) {
         var scaleX = blockWidth / windowWidth, scaleY = blockHeight / windowHeight
         if (scaleX > scaleY) {
