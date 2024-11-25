@@ -6,3 +6,4 @@ To run the game just open `index.html` file in you browser.
 Controls:
   - Move: `W` `A` `S` `D`
   - Attack: `LMB` or `space`
+  - Pick weapon: `F`
