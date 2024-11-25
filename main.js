@@ -56,15 +56,17 @@ window.addEventListener("keydown", (e) => {
                 if (Math.sqrt((elem.x-player.x)**2 + (elem.y-player.y)**2) < player.sprites.size/2) {
                     if (!(elem instanceof Shield)) {
                         console.log("Weapon picked")
-                        let drop = player.weapon
+                        if (player.weapon) {
+                            let drop = player.weapon
+                            weapons.push(drop)
+                            weapons[weapons.length-1].x = player.x
+                            weapons[weapons.length-1].y = player.y
+                            weapons[weapons.length-1].owner = null
+                            weapons[weapons.length-1].angle = 0
+                        }
                         elem.owner = player
                         player.weapon = elem
                         weapons.splice(i, 1)
-                        weapons.push(drop)
-                        weapons[weapons.length-1].x = player.x
-                        weapons[weapons.length-1].y = player.y
-                        weapons[weapons.length-1].owner = null
-                        weapons[weapons.length-1].angle = 0
                     }
                 }
             })
@@ -185,6 +187,9 @@ function update() {
     player.anim = player.anim>=resources.src.player.count ? 1 : player.anim
     player.health.cur = Math.min(player.health.max, player.health.cur+.03)
     player.walk()
+    if (player.weapon && !gameOver) {
+        gameStarted = true
+    }
     if (player.weapon) {
         if (player.onAttack) {
             player.weapon.attack()
@@ -215,17 +220,8 @@ function update() {
     weapons.forEach((elem, i) => {
         if (Math.sqrt((elem.x-player.x)**2 + (elem.y-player.y)**2) < player.sprites.size/2) {
             if (!(elem instanceof Shield)) {
-                if (player.weapon == null) {
-                    console.log("Weapon picked")
-                    gameStarted = true
-                    elem.owner = player
-                    player.weapon = elem
-                    weapons.splice(i, 1)
-                    origin = ""
-                } else {
-                    origin = "weapon"
-                    controls.push(new Control(context, elem.x+Math.floor(elem.sprites.size/2), elem.y-elem.sprites.sizeY, "F"))
-                }
+                origin = "weapon"
+                controls.push(new Control(context, elem.x+Math.floor(elem.sprites.size/2), elem.y-elem.sprites.sizeY, "F"))
             } else {
                 console.log("Shield picked")
                 player.shield = elem.sprites
