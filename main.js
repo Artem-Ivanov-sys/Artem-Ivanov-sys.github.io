@@ -1,3 +1,4 @@
+import { resources } from "./js/Resources.js"
 
 const canvas = document.getElementById("field")
 const context = canvas.getContext("2d")
@@ -57,78 +58,7 @@ function createAngle(point1, point2) {
     return Math.acos((point1[0]-point2[0])/Math.sqrt((point1[0]-point2[0])**2+(point1[1]-point2[1])**2))
 }
 
-const WIDTH = canvas.width,
-    HEIGHT = canvas.height,
-    Player_sprites = {
-        size:34,
-        count:3,
-        row:2,
-        src:"sprites/girl1.png",
-        img: new Image()
-    },
-    Enemy_1_sprites = {
-        size:34,
-        count:3,
-        row:2,
-        src:"sprites/enemy1.png",
-        img: new Image(src="sprites/enemy1.png")
-    },
-    Enemy_2_sprites = {
-        size:40,
-        count:3,
-        row:2,
-        src:"sprites/enemy2.png",
-        img: new Image(src="sprites/enemy2.png")
-    },
-    Shield_sprites = {
-        size:40,
-        count:1,
-        row:2,
-        health_line: [13, 14, 14],
-        src:"sprites/shield.png",
-        img: new Image(src="sprites/shield.png")
-    },
-    Coin_sprites = {
-        size:22,
-        count:3,
-        row:2,
-        src:"sprites/coin.png",
-        img: new Image(src="sprites/coin.png")
-    },
-    Weapon_sprites = {
-        size:52,
-        sizeY:18,
-        center_params: [22, 8],
-        bullet_factor: [0, 0],
-        count:1,
-        row:1,
-        src:"sprites/m16.png",
-        img: new Image(src="sprites/m16.png")
-    },
-    Weapon_2_sprites = {
-        size:52,
-        sizeY:22,
-        center_params: [10, 6],
-        bullet_factor: [0, 3],
-        count:1,
-        row:1,
-        src:"sprites/m134.png",
-        img: new Image(src="sprites/m134.png")
-    },
-    Bullet_sprites = {
-        size:2,
-        src:"sprites/m16_bullet.png",
-        img: new Image(src="sprites/m16_bullet.png")
-    }
-
-Player_sprites.img.src = Player_sprites.src
-Enemy_1_sprites.img.src = Enemy_1_sprites.src
-Enemy_2_sprites.img.src = Enemy_2_sprites.src
-Shield_sprites.img.src = Shield_sprites.src
-Coin_sprites.img.src = Coin_sprites.src
-Weapon_sprites.img.src = Weapon_sprites.src
-Weapon_2_sprites.img.src = Weapon_2_sprites.src
-Bullet_sprites.img.src = Bullet_sprites.src
+const WIDTH = canvas.width, HEIGHT = canvas.height
 
 function NewCursor() {
     let _offset = {x: 0, y: 0}
@@ -172,8 +102,6 @@ class Player {
         this.on_right = true
         
         this.coins = 28
-
-        this.player = sprites.img
     }
 
     walk() {
@@ -198,7 +126,7 @@ class Player {
                 this.on_right = false
             }
         } else {
-            let angle = createAngle([cursor.offset.x, cursor.offset.y], [player.x+Player_sprites.size/2, player.y+player.center])
+            let angle = createAngle([cursor.offset.x, cursor.offset.y], [player.x+resources.src.player.size/2, player.y+player.center])
             let x = cursor.offset.x, y = cursor.offset.y
             this.weapon.angle = y>(this.y+this.center)?angle:-angle
             if (x<this.x+this.sprites.size/2) {
@@ -212,7 +140,7 @@ class Player {
 
     coins_pick(coins) {
         coins.forEach((c, i) => {
-            if (Math.sqrt((c.x-this.x)**2 + (c.y-this.y)**2) < Coin_sprites.size) {
+            if (Math.sqrt((c.x-this.x)**2 + (c.y-this.y)**2) < resources.src.coin.size) {
                 this.coins++
                 coins.splice(i, 1)
             }
@@ -233,7 +161,7 @@ class Player {
 
     render() {
         this.master_root.drawImage(
-            this.player, this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.on_right))%this.sprites.row),
+            this.sprites.img, this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.on_right))%this.sprites.row),
             this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.on_right))/this.sprites.row),
             this.sprites.size, this.sprites.size,
             Math.floor(this.x), Math.floor(this.y), this.sprites.size, this.sprites.size
@@ -261,9 +189,6 @@ class Enemy {
         this.walking = {x: 0, y: 0}
         this.weapon = null
         this.aimed = .8
-
-        this.enemy = new Image(sprites.size, sprites.size)
-        this.enemy.src = sprites.src
     }
 
     walk(dir) {
@@ -307,13 +232,13 @@ class Enemy {
     }
 
     die(coins) {
-        coins.push(new Coin(this.master_root, Math.floor(this.x+(this.sprites.size-Coin_sprites.size)/2),
-            Math.floor(this.y+this.sprites.size-Coin_sprites.size), Coin_sprites))
+        coins.push(new Coin(this.master_root, Math.floor(this.x+(this.sprites.size-resources.src.coin.size)/2),
+            Math.floor(this.y+this.sprites.size-resources.src.coin.size), resources.src.coin))
     }
 
     render() {
         this.master_root.drawImage(
-            this.enemy, this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.walking.x>=0))%this.sprites.row),
+            this.sprites.img, this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.walking.x>=0))%this.sprites.row),
             this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.walking.x>=0))/this.sprites.row),
             this.sprites.size, this.sprites.size,
             Math.floor(this.x), Math.floor(this.y), this.sprites.size, this.sprites.size
@@ -346,9 +271,6 @@ class Enemy2 {
         this.walking = {x: 0, y: 0}
         this.weapon = null
         this.aim = 1
-
-        this.enemy = new Image(sprites.size, sprites.size)
-        this.enemy.src = sprites.src
     }
 
     walk(dir) {
@@ -398,19 +320,19 @@ class Enemy2 {
     }
 
     die(coins) {
-        coins.push(new Coin(this.master_root, Math.floor(this.x+(this.sprites.size-Coin_sprites.size)/2),
-            Math.floor(this.y+this.sprites.size-Coin_sprites.size), Coin_sprites))
+        coins.push(new Coin(this.master_root, Math.floor(this.x+(this.sprites.size-resources.src.coin.size)/2),
+            Math.floor(this.y+this.sprites.size-resources.src.coin.size), resources.src.coin))
         if (this.health.shield.cur > this.health.shield.max / 2) {
             if (Math.random() > 0.98) {
-                weapons.push(new Shield(this.master_root, Math.floor(this.x+(this.sprites.size-Shield_sprites.size)/2),
-                    Math.floor(this.y+this.sprites.size-Shield_sprites.size), Shield_sprites))
+                weapons.push(new Shield(this.master_root, Math.floor(this.x+(this.sprites.size-resources.src.shield.size)/2),
+                    Math.floor(this.y+this.sprites.size-resources.src.shield.size), resources.src.shield))
             }
         }
     }
 
     render() {
         this.master_root.drawImage(
-            this.enemy, this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.walking.x>=0))%this.sprites.row),
+            this.sprites.img, this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.walking.x>=0))%this.sprites.row),
             this.sprites.size*Math.floor((this.anim+this.sprites.count*(this.walking.x>=0))/this.sprites.row),
             this.sprites.size, this.sprites.size,
             Math.floor(this.x), Math.floor(this.y), this.sprites.size, this.sprites.size
@@ -457,13 +379,11 @@ class Shield extends ObjectTime {
         this.y = y
         this.sprites = sprites
         this.anim = 0
-
-        this.shield = sprites.img
     }
 
     render() {
         this.master_root.drawImage(
-            this.shield, this.sprites.size*Math.floor(this.anim%this.sprites.row),
+            this.sprites.img, this.sprites.size*Math.floor(this.anim%this.sprites.row),
             this.sprites.size*Math.floor(this.anim/this.sprites.row),
             this.sprites.size, this.sprites.size, this.x-1,
                 Math.floor(this.y+3*Math.sin((this.startedTime-performance.now())/500)), this.sprites.size, this.sprites.size
@@ -483,8 +403,6 @@ class Bullet {
         this.sprites = sprites
         this.ignore = []
         this.player = player
-
-        this.bullet = sprites.img
     }
 
     move() {
@@ -514,7 +432,7 @@ class Bullet {
 
     render() {
         this.master_root.drawImage(
-            this.bullet, 0, 0, this.sprites.size, this.sprites.size,
+            this.sprites.img, 0, 0, this.sprites.size, this.sprites.size,
             Math.floor(this.x-this.sprites.size/2), Math.floor(this.y-this.sprites.size/2), this.sprites.size, this.sprites.size
         )
     }
@@ -539,7 +457,6 @@ class Weapon extends ObjectTime {
         this.delay = delay
         console.log(this.slowing, this.delay)
 
-        this.weapon = sprites.img
         this.shakeMod = this.shakeMod.bind(shakeMod)
     }
 
@@ -552,7 +469,7 @@ class Weapon extends ObjectTime {
                 this.sprites.bullet_factor[0]*Math.cos(this.angle) - this.sprites.bullet_factor[1]*Math.sin(this.angle),
                 this.owner.y+this.owner.center + 
                 this.sprites.bullet_factor[0]*Math.sin(this.angle) + this.sprites.bullet_factor[1]*Math.cos(this.angle),
-                10, this.owner.dmg, Bullet_sprites, this.angle + (Math.random()*2*this.scattering - this.scattering) * Math.PI / 180,
+                10, this.owner.dmg, resources.src.bullet, this.angle + (Math.random()*2*this.scattering - this.scattering) * Math.PI / 180,
                 this.owner.on_right, this.owner))
             setTimeout(() => {this.active = true}, this.delay)
         }
@@ -563,7 +480,7 @@ class Weapon extends ObjectTime {
             context.translate(this.x+this.sprites.size/2, this.y+this.sprites.sizeY/2+10)
             context.rotate(this.angle)
             this.master_root.drawImage(
-                this.weapon, 0, this.sprites.sizeY,
+                this.sprites.img, 0, this.sprites.sizeY,
                 this.sprites.size, this.sprites.sizeY,
                 -this.sprites.size/2, Math.floor(-this.sprites.sizeY/2+5*Math.sin((this.startedTime-performance.now())/500)),
                     this.sprites.size, this.sprites.sizeY
@@ -580,7 +497,7 @@ class Weapon extends ObjectTime {
                 context.rotate(this.angle)
                 context.scale(-1, 1)
                 this.master_root.drawImage(
-                    this.weapon, 0, 0,
+                    this.sprites.img, 0, 0,
                     this.sprites.size, this.sprites.sizeY,
                     -this.center_params[0]*this.scale, -this.center_params[1]*this.scale,
                     this.sprites.size*this.scale, this.sprites.sizeY*this.scale
@@ -596,7 +513,7 @@ class Weapon extends ObjectTime {
                     this.owner.y+this.owner.center)
                 context.rotate(this.angle)
                 this.master_root.drawImage(
-                    this.weapon, 0, 0,
+                    this.sprites.img, 0, 0,
                     this.sprites.size, this.sprites.sizeY,
                     -this.center_params[0]*this.scale, -this.center_params[1]*this.scale,
                     this.sprites.size*this.scale, this.sprites.sizeY*this.scale
@@ -653,22 +570,15 @@ class Control extends ObjectTime {
     }
 }
 
-const shadow = new Image(34, 36)
-shadow.src = "sprites/shadow.png"
-const background = new Image(WIDTH, HEIGHT)
-background.src = "sprites/background.png"
-
-var player = new Player(context, WIDTH/2, HEIGHT/2, 2, 100, 10, Player_sprites, 21)
+var player = new Player(context, WIDTH/2, HEIGHT/2, 2, 100, 10, resources.src.player, 21)
 var coins = []
 var enemies = []
 var controls = []
-var weapons = [new Weapon(context, WIDTH/2, HEIGHT/3, Weapon_2_sprites.center_params, Weapon_2_sprites, undefined, undefined,
+var weapons = [new Weapon(context, WIDTH/2, HEIGHT/3, resources.src.weapon_2.center_params, resources.src.weapon_2, undefined, undefined,
                 () => {}, .3, 50, 3),
-                new Weapon(context, WIDTH/2+100, HEIGHT/3, Weapon_sprites.center_params, Weapon_sprites, undefined, undefined, () => {}, 0, 100),
-                new Shield(context, WIDTH/2-40, HEIGHT/3, Shield_sprites)]
+                new Weapon(context, WIDTH/2+100, HEIGHT/3, resources.src.weapon_1.center_params, resources.src.weapon_1, undefined, undefined, () => {}, 0, 100),
+                new Shield(context, WIDTH/2-40, HEIGHT/3, resources.src.shield)]
 var origin = ""
-// var weapons = [new Weapon(context, WIDTH/2, HEIGHT/3, Weapon_sprites.center_params, Weapon_sprites, undefined, undefined, () => {}, 0, 100),
-//                 new Shield(context, WIDTH/2-40, HEIGHT/3, Shield_sprites)]
 var startTime = performance.now()
 
 window.addEventListener("keydown", (e) => {
@@ -693,7 +603,7 @@ window.addEventListener("keydown", (e) => {
                 if (Math.sqrt((elem.x-player.x)**2 + (elem.y-player.y)**2) < player.sprites.size/2) {
                     if (!(elem instanceof Shield)) {
                         console.log("Weapon picked")
-                        drop = player.weapon
+                        let drop = player.weapon
                         elem.owner = player
                         player.weapon = elem
                         weapons.splice(i, 1)
@@ -733,9 +643,9 @@ window.addEventListener("keyup", (e) => {
 canvas.addEventListener("mousemove", (e) => {
     cursor.offset = e
     if (player.weapon) {
-        let angle = createAngle([e.offsetX, e.offsetY], [player.x+Player_sprites.size/2, player.y+player.center])
+        let angle = createAngle([e.offsetX, e.offsetY], [player.x+resources.src.player.size/2, player.y+player.center])
         player.weapon.angle = e.offsetY>(player.y+player.center)?angle:-angle
-        if (e.offsetX<player.x+Player_sprites.size/2) {
+        if (e.offsetX<player.x+resources.src.player.size/2) {
             player.on_right = false
             player.weapon.angle += Math.PI
         } else {
@@ -754,7 +664,7 @@ canvas.addEventListener("mouseup", (e) => {
 
 function render() {
     if (performance.now() - startTime > 1000 / FPS) {
-        context.drawImage(background, 0, 0, WIDTH, HEIGHT)
+        context.drawImage(resources.src.background.img, 0, 0, WIDTH, HEIGHT)
         let translation = 0
         if (player.onAttack) {
             translation = Math.sin(performance.now())
@@ -771,9 +681,9 @@ function render() {
         context.globalAlpha = 0.2
         renderList.forEach((elem) => {
             if (["Coin", "Weapon"].includes(elem.__proto__.constructor.name)) {
-                context.drawImage(shadow, elem.x+(elem.sprites.size-34)/2, elem.y, 34, 36)
+                context.drawImage(resources.src.shadow.img, elem.x+(elem.sprites.size-34)/2, elem.y, 34, 36)
             } else {
-                context.drawImage(shadow, elem.x+(elem.sprites.size-34)/2, elem.y+elem.sprites.size-34, 34, 36)
+                context.drawImage(resources.src.shadow.img, elem.x+(elem.sprites.size-34)/2, elem.y+elem.sprites.size-34, 34, 36)
             }
         })
         context.globalAlpha = 1
@@ -783,23 +693,23 @@ function render() {
 
         context.font = "20px monospace"; context.fillStyle = "white"
         context.drawImage(
-            Coin_sprites.img, 0, 0, Coin_sprites.size, Coin_sprites.size, 5, 5, Coin_sprites.size, Coin_sprites.size
+            resources.src.coin.img, 0, 0, resources.src.coin.size, resources.src.coin.size, 5, 5, resources.src.coin.size, resources.src.coin.size
         )
-        context.fillText(player.coins, Coin_sprites.size+10, Coin_sprites.size)
-        context.fillText("HP", WIDTH-35-100, Coin_sprites.size)
+        context.fillText(player.coins, resources.src.coin.size+10, resources.src.coin.size)
+        context.fillText("HP", WIDTH-35-100, resources.src.coin.size)
         context.fillStyle = "#FF5B5B"
-        context.fillRect(WIDTH-5-100, 5, 100, Coin_sprites.size)
+        context.fillRect(WIDTH-5-100, 5, 100, resources.src.coin.size)
         context.fillStyle = "#1AB911"
-        context.fillRect(WIDTH-5-100, 5, Math.max(0, Math.floor(player.health.cur/player.health.max*100)), Coin_sprites.size)
+        context.fillRect(WIDTH-5-100, 5, Math.max(0, Math.floor(player.health.cur/player.health.max*100)), resources.src.coin.size)
         if (player.shield!=null) {
             context.font = "13px monospace";
             context.fillStyle = "white"
-            context.fillText("ARM", WIDTH-35-100, Coin_sprites.size*1.75 + 2.5)
+            context.fillText("ARM", WIDTH-35-100, resources.src.coin.size*1.75 + 2.5)
             context.fillStyle = "#939393"
-            context.fillRect(WIDTH-5-100, 10 + Coin_sprites.size, 100, Coin_sprites.size/2)
+            context.fillRect(WIDTH-5-100, 10 + resources.src.coin.size, 100, resources.src.coin.size/2)
             context.fillStyle = "#1192b9"
-            context.fillRect(WIDTH-5-100, 10 + Coin_sprites.size, 
-                Math.max(0, Math.floor(player.shield_health.cur/player.shield_health.max*100)), Coin_sprites.size/2)
+            context.fillRect(WIDTH-5-100, 10 + resources.src.coin.size, 
+                Math.max(0, Math.floor(player.shield_health.cur/player.shield_health.max*100)), resources.src.coin.size/2)
         }
         controls.forEach((i) => i.render())
         frames++
@@ -817,9 +727,9 @@ function update() {
     } else {player.anim=0}
     player.coins_pick(coins)
     coins.forEach((c) => {
-        c.anim = c.anim+.08>=Coin_sprites.count ? 0 : c.anim+.08
+        c.anim = c.anim+.08>=resources.src.coin.count ? 0 : c.anim+.08
     })
-    player.anim = player.anim>=Player_sprites.count ? 1 : player.anim
+    player.anim = player.anim>=resources.src.player.count ? 1 : player.anim
     player.health.cur = Math.min(player.health.max, player.health.cur+.03)
     player.walk()
     if (player.weapon) {
@@ -891,35 +801,35 @@ function update() {
 function enemiesProceed() {
     function spawn_en_1(side) {
         if (side == 0) {
-            enemies.push(new Enemy(context, Math.floor(Math.random()*(2*Enemy_1_sprites.size+WIDTH)-Enemy_1_sprites.size),
-                -Enemy_1_sprites.size, 1.5, 50, 10, Enemy_1_sprites))
+            enemies.push(new Enemy(context, Math.floor(Math.random()*(2*resources.src.enemy_1.size+WIDTH)-resources.src.enemy_1.size),
+                -resources.src.enemy_1.size, 1.5, 50, 10, resources.src.enemy_1))
         } else if (side == 1) {
             enemies.push(new Enemy(context, WIDTH,
-                Math.floor(Math.random()*(2*Enemy_1_sprites.size+HEIGHT)-Enemy_1_sprites.size), 1.5, 50, 10, Enemy_1_sprites))
+                Math.floor(Math.random()*(2*resources.src.enemy_1.size+HEIGHT)-resources.src.enemy_1.size), 1.5, 50, 10, resources.src.enemy_1))
         } else if (side == 2) {
-            enemies.push(new Enemy(context, Math.floor(Math.random()*(2*Enemy_1_sprites.size+WIDTH)-Enemy_1_sprites.size),
-                HEIGHT, 1.5, 50, 10, Enemy_1_sprites))
+            enemies.push(new Enemy(context, Math.floor(Math.random()*(2*resources.src.enemy_1.size+WIDTH)-resources.src.enemy_1.size),
+                HEIGHT, 1.5, 50, 10, resources.src.enemy_1))
         } else if (side == 3) {
-            enemies.push(new Enemy(context, -Enemy_1_sprites.size,
-                Math.floor(Math.random()*(2*Enemy_1_sprites.size+HEIGHT)-Enemy_1_sprites.size), 1.5, 50, 10, Enemy_1_sprites))
+            enemies.push(new Enemy(context, -resources.src.enemy_1.size,
+                Math.floor(Math.random()*(2*resources.src.enemy_1.size+HEIGHT)-resources.src.enemy_1.size), 1.5, 50, 10, resources.src.enemy_1))
         }
     }
 
     function spawn_en_2(side) {
         if (side == 0) {
-            enemies.push(new Enemy2(context, Math.floor(Math.random()*(2*Enemy_2_sprites.size+WIDTH)-Enemy_2_sprites.size),
-                -Enemy_2_sprites.size, 1, 100, 40, Enemy_2_sprites, Shield_sprites))
+            enemies.push(new Enemy2(context, Math.floor(Math.random()*(2*resources.src.Enemy_2.size+WIDTH)-resources.src.Enemy_2.size),
+                -resources.src.Enemy_2.size, 1, 100, 40, resources.src.Enemy_2, resources.src.shield))
         } else if (side == 1) {
             enemies.push(new Enemy2(context, WIDTH,
-                Math.floor(Math.random()*(2*Enemy_2_sprites.size+HEIGHT)-Enemy_2_sprites.size),
-                1, 100, 40, Enemy_2_sprites, Shield_sprites))
+                Math.floor(Math.random()*(2*resources.src.Enemy_2.size+HEIGHT)-resources.src.Enemy_2.size),
+                1, 100, 40, resources.src.Enemy_2, resources.src.shield))
         } else if (side == 2) {
-            enemies.push(new Enemy2(context, Math.floor(Math.random()*(2*Enemy_1_sprites.size+WIDTH)-Enemy_2_sprites.size),
-                HEIGHT, 1, 100, 40, Enemy_2_sprites, Shield_sprites))
+            enemies.push(new Enemy2(context, Math.floor(Math.random()*(2*resources.src.enemy_1.size+WIDTH)-resources.src.Enemy_2.size),
+                HEIGHT, 1, 100, 40, resources.src.Enemy_2, resources.src.shield))
         } else if (side == 3) {
-            enemies.push(new Enemy2(context, -Enemy_2_sprites.size,
-                Math.floor(Math.random()*(2*Enemy_2_sprites.size+HEIGHT)-Enemy_2_sprites.size),
-                1, 100, 40, Enemy_2_sprites, Shield_sprites))
+            enemies.push(new Enemy2(context, -resources.src.Enemy_2.size,
+                Math.floor(Math.random()*(2*resources.src.Enemy_2.size+HEIGHT)-resources.src.Enemy_2.size),
+                1, 100, 40, resources.src.Enemy_2, resources.src.shield))
         }
     }
 
@@ -954,7 +864,7 @@ function enemiesProceed() {
         if (Math.abs(e.walking.x)||Math.abs(e.walking.y)) {
             e.anim = Math.max(1, e.anim+.08)
         } else {e.anim=0}
-        e.anim = e.anim>=Enemy_1_sprites.count ? 1 : e.anim
+        e.anim = e.anim>=resources.src.enemy_1.count ? 1 : e.anim
     })
     for (let i = 0; i < enemies.length-1; i++) {
         for (let j = i+1; j < enemies.length; j++) {
@@ -974,5 +884,5 @@ var frame = () => {
 }
 
 window.onload = () => {
-    frame()
+    new Promise((resolve, reject) => resources.render()).then(frame())
 }
