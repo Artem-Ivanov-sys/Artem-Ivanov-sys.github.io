@@ -11,7 +11,7 @@ var activated_enemies = [true, true, false]
 var frames = 0
 
 function checkCollision(obj1, obj2) {
-    let delta = {dx: 0, dy: 0}
+    let delta = {dx: 0, dy: 0}  
     if (obj1.y>=obj2.y&&obj1.y<=obj2.y+obj2.sprites.size/2&&obj1.walking.y<=obj2.walking.y) {           // up side
         if ((obj1.x>=obj2.x&&obj1.x<=obj2.x+obj2.sprites.size/2)||
             (obj1.x+obj1.sprites.size/2>=obj2.x&&obj1.x+obj1.sprites.size/2<=obj2.x+obj2.sprites.size/2)) {
