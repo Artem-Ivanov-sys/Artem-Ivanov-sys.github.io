@@ -6,4 +6,4 @@ This game is for Desktop only.
 Controls:
   - Move: `W` `A` `S` `D`
   - Attack: `LMB` or `space`
-  - Pick weapon: `F`
+  - Pick/Drop weapon: `F`

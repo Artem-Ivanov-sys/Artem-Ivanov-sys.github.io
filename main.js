@@ -18,7 +18,6 @@ const enemiesMaxCount = 75 // 75
 var enemiesStarting = 180 // 180
 var activated_enemies = [true, true, false]
 var frames = 0
-
 const WIDTH = canvas.width, HEIGHT = canvas.height
 
 const cursor = new (NewCursor())()
@@ -71,6 +70,15 @@ window.addEventListener("keydown", (e) => {
                 }
             })
             origin = ""
+        } else if (player.weapon) {
+            console.log("Weapon dropped")
+            let drop = player.weapon
+            weapons.push(drop)
+            weapons[weapons.length-1].x = player.x
+            weapons[weapons.length-1].y = player.y
+            weapons[weapons.length-1].owner = null
+            weapons[weapons.length-1].angle = 0
+            player.weapon = null
         }
     }
 })
@@ -180,6 +188,10 @@ function update() {
     if (Math.abs(player.walking.x)||Math.abs(player.walking.y)) {
         player.anim = Math.max(1, player.anim+.08)
     } else {player.anim=0}
+    if (!player.is_alive) {
+        gameOver = true
+        gameStarted = false
+    }
     player.coins_pick(coins)
     coins.forEach((c) => {
         c.anim = c.anim+.08>=resources.src.coin.count ? 0 : c.anim+.08

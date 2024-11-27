@@ -38,8 +38,7 @@ export class Enemy2 {
                     if (player.shield_health.cur == 0) player.shield = null
                 }
                 if (player.health.cur == 0) {
-                    gameStarted = false
-                    gameOver = true
+                    player.is_alive = false
                 }
                 this.cooldown()
             }

@@ -18,6 +18,7 @@ export class Player {
         this.center = center
         this.on_right = true
         this.cursor = cursor
+        this.is_alive = true
         
         this.coins = 28
     }
