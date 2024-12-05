@@ -56,6 +56,15 @@ export class Resources {
                 row:1,
                 src:"sprites/m134.png"
             },
+            weapon_3: {
+                size: 42,
+                sizeY: 22,
+                center_params: [12, 8],
+                bullet_factor: [-10, 2],
+                count: 1,
+                row: 1,
+                src: "sprites/m870.png"
+            },
             bullet: {
                 size:2,
                 src:"sprites/m16_bullet.png"

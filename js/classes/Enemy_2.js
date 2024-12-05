@@ -1,5 +1,6 @@
 import { Coin } from "./Coin.js"
 import { resources } from "../Resources.js"
+import { Shield } from "./Shield.js"
 
 export class Enemy2 {
     constructor(master_root, x, y, speed, max_health, dmg, sprites, shield) {
@@ -63,14 +64,16 @@ export class Enemy2 {
     }
 
     die(coins) {
+        let drop = []
         coins.push(new Coin(this.master_root, Math.floor(this.x+(this.sprites.size-resources.src.coin.size)/2),
             Math.floor(this.y+this.sprites.size-resources.src.coin.size), resources.src.coin))
         if (this.health.shield.cur > this.health.shield.max / 2) {
             if (Math.random() > 0.98) {
-                weapons.push(new Shield(this.master_root, Math.floor(this.x+(this.sprites.size-resources.src.shield.size)/2),
+                drop.push(new Shield(this.master_root, Math.floor(this.x+(this.sprites.size-resources.src.shield.size)/2),
                     Math.floor(this.y+this.sprites.size-resources.src.shield.size), resources.src.shield))
             }
         }
+        return drop
     }
 
     render() {

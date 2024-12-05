@@ -56,8 +56,10 @@ export class Enemy {
     }
 
     die(coins) {
+        let drop = []
         coins.push(new Coin(this.master_root, Math.floor(this.x+(this.sprites.size-resources.src.coin.size)/2),
             Math.floor(this.y+this.sprites.size-resources.src.coin.size), resources.src.coin))
+        return drop
     }
 
     render() {

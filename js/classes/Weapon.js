@@ -3,8 +3,10 @@ import { Bullet } from "./Bullet.js"
 import { resources } from "../Resources.js"
 
 export class Weapon extends ObjectTime {
-    constructor(master_root, x, y, center_params, sprites, angle, owner, shakeMod, slowing=0, delay=0, scattering=0, scale=.8) {
+    constructor(master_root, x, y, center_params, sprites, angle, owner, shakeVar,
+        slowing=0, delay=0, scattering=0, scale=.8, count=1) {
         super()
+        this.count = count
         this.master_root = master_root
         this.x = x
         this.y = y
@@ -21,20 +23,21 @@ export class Weapon extends ObjectTime {
         this.delay = delay
         console.log(this.slowing, this.delay)
 
-        this.shakeMod = this.shakeMod.bind(shakeMod)
+        this.shakeVar = shakeVar
     }
-
-    shakeMod() {}
 
     attack() {
         if (this.active) {
             this.active = false
-            this.bullets.push(new Bullet(this.master_root, this.owner.x+this.owner.sprites.size/2 + 
-                this.sprites.bullet_factor[0]*Math.cos(this.angle) - this.sprites.bullet_factor[1]*Math.sin(this.angle),
-                this.owner.y+this.owner.center + 
-                this.sprites.bullet_factor[0]*Math.sin(this.angle) + this.sprites.bullet_factor[1]*Math.cos(this.angle),
-                10, this.owner.dmg, resources.src.bullet, this.angle + (Math.random()*2*this.scattering - this.scattering) * Math.PI / 180,
-                this.owner.on_right, this.owner))
+            this.shakeVar = true
+            for (let i=0;i<this.count;i++) {
+                this.bullets.push(new Bullet(this.master_root, this.owner.x+this.owner.sprites.size/2 + 
+                    this.sprites.bullet_factor[0]*Math.cos(this.angle) - this.sprites.bullet_factor[1]*Math.sin(this.angle),
+                    this.owner.y+this.owner.center + 
+                    this.sprites.bullet_factor[0]*Math.sin(this.angle) + this.sprites.bullet_factor[1]*Math.cos(this.angle),
+                    10, this.owner.dmg, resources.src.bullet, this.angle + (Math.random()*2*this.scattering - this.scattering) * Math.PI / 180,
+                    this.owner.on_right, this.owner))
+            }
             setTimeout(() => {this.active = true}, this.delay)
         }
     }

@@ -29,6 +29,9 @@ var controls = []
 var weapons = [new Weapon(context, WIDTH/2, HEIGHT/3, resources.src.weapon_2.center_params, resources.src.weapon_2, undefined, undefined,
                 () => {}, .3, 50, 3),
                 new Weapon(context, WIDTH/2+100, HEIGHT/3, resources.src.weapon_1.center_params, resources.src.weapon_1, undefined, undefined, () => {}, 0, 100),
+                new Weapon(context, WIDTH/2+200, HEIGHT/3,
+                    resources.src.weapon_3.center_params, resources.src.weapon_3,
+                    undefined, undefined, () => {}, .1, 500, 20, .8, 8),
                 new Shield(context, WIDTH/2-40, HEIGHT/3, resources.src.shield)]
 var origin = ""
 var startTime = performance.now()
@@ -51,7 +54,7 @@ window.addEventListener("keydown", (e) => {
         console.log("origin >>>> "+origin)
         if (origin == "weapon") {
             console.log("origin triggered")
-            weapons.forEach((elem, i) => {
+            weapons.every((elem, i) => {
                 if (Math.sqrt((elem.x-player.x)**2 + (elem.y-player.y)**2) < player.sprites.size/2) {
                     if (!(elem instanceof Shield)) {
                         console.log("Weapon picked")
@@ -66,8 +69,10 @@ window.addEventListener("keydown", (e) => {
                         elem.owner = player
                         player.weapon = elem
                         weapons.splice(i, 1)
+                        return false
                     }
                 }
+                return true
             })
             origin = ""
         } else if (player.weapon) {
@@ -80,6 +85,7 @@ window.addEventListener("keydown", (e) => {
             weapons[weapons.length-1].angle = 0
             player.weapon = null
         }
+        console.log(weapons)
     }
 })
 
@@ -129,7 +135,8 @@ function render() {
     if (performance.now() - startTime > 1000 / FPS) {
         context.drawImage(resources.src.background.img, 0, 0, WIDTH, HEIGHT)
         let translation = 0
-        if (player.onAttack) {
+        if (player.onAttack && player.weapon && player.weapon.shakeVar) {
+            player.weapon.shakeVar = false
             translation = Math.sin(performance.now())
         }
         context.translate(0, translation)
@@ -216,7 +223,7 @@ function update() {
             if (hit != false) {
                 if (hit[0].attacked(elem)) {
                     if (hit[0].health.cur == 0) {
-                        hit[0].die(coins)
+                        weapons = [...weapons, ...hit[0].die(coins)]
                         enemies.splice(hit[1], 1)
                     }
                     return false
@@ -232,9 +239,11 @@ function update() {
     weapons.forEach((elem, i) => {
         if (Math.sqrt((elem.x-player.x)**2 + (elem.y-player.y)**2) < player.sprites.size/2) {
             if (!(elem instanceof Shield)) {
-                origin = "weapon"
-                controls.push(new Control(context, elem.x+Math.floor(elem.sprites.size/2), elem.y-elem.sprites.sizeY, "F"))
-            } else {
+                if (!origin) {
+                    origin = "weapon"
+                    controls.push(new Control(context, elem.x+Math.floor(elem.sprites.size/2), elem.y-elem.sprites.sizeY, "F"))
+                }
+            } else if (elem instanceof Shield) {
                 console.log("Shield picked")
                 player.shield = elem.sprites
                 player.shield_health.cur = 200
