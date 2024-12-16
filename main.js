@@ -256,7 +256,7 @@ function update() {
         enemiesProceed()
     }
     if (player.coins >= 300) {
-        enemiesStarting = 1
+        enemiesStarting = 10
     } else if (player.coins >= 150) {
         enemiesStarting = 30
     } else if (player.coins <= 80) {
