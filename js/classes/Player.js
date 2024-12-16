@@ -20,7 +20,7 @@ export class Player {
         this.cursor = cursor
         this.is_alive = true
         
-        this.coins = 28
+        this.coins = 301
     }
 
     walk() {

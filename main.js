@@ -31,7 +31,7 @@ var weapons = [new Weapon(context, WIDTH/2, HEIGHT/3, resources.src.weapon_2.cen
                 new Weapon(context, WIDTH/2+100, HEIGHT/3, resources.src.weapon_1.center_params, resources.src.weapon_1, undefined, undefined, () => {}, 0, 100),
                 new Weapon(context, WIDTH/2+200, HEIGHT/3,
                     resources.src.weapon_3.center_params, resources.src.weapon_3,
-                    undefined, undefined, () => {}, .1, 500, 20, .8, 8),
+                    undefined, undefined, () => {}, .1, 500, 20, .8, 8), // .1, 500, 20, .8, 8 
                 new Shield(context, WIDTH/2-40, HEIGHT/3, resources.src.shield)]
 var origin = ""
 var startTime = performance.now()
@@ -255,16 +255,18 @@ function update() {
     if (gameStarted) {
         enemiesProceed()
     }
-    if (player.coins == 10) {
-        enemiesStarting = 100
-    } else if (player.coins == 30) {
-        enemiesStarting = 60
-    } else if (player.coins == 80) {
-        enemiesStarting = 40
-    } else if (player.coins == 150) {
+    if (player.coins >= 300) {
+        enemiesStarting = 1
+    } else if (player.coins >= 150) {
         enemiesStarting = 30
-    } else if (player.coins == 300) {
-        enemiesStarting = 20
+    } else if (player.coins <= 80) {
+        enemiesStarting = 40
+    } else if (player.coins <= 50) {
+        enemiesStarting = 60
+    } else if (player.coind <= 20) {
+        enemiesStarting = 100
+    } else {
+        enemiesStarting = 140
     }
 }
 
@@ -309,9 +311,9 @@ function enemiesProceed() {
         if (enemies.length < enemiesMaxCount) {
             let side = Math.floor(Math.random()*4)
             let type = Math.random()
-            if (type < .2) {
+            if (type < .0) {
                 spawn_en_1(side)
-            } else if (type < .9) {
+            } else if (type < 1.9) {
                 if (activated_enemies[1]) {
                     spawn_en_2(side)
                 } else {

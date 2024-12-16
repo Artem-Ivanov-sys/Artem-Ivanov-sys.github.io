@@ -4,9 +4,9 @@ import { resources } from "../Resources.js"
 
 export class Weapon extends ObjectTime {
     constructor(master_root, x, y, center_params, sprites, angle, owner, shakeVar,
-        slowing=0, delay=0, scattering=0, scale=.8, count=1) {
+        slowing, delay, scattering, scale, count) {
         super()
-        this.count = count
+        this.count = count ?? 1
         this.master_root = master_root
         this.x = x
         this.y = y
@@ -16,11 +16,11 @@ export class Weapon extends ObjectTime {
         this.angle = angle || 0
         this.owner = owner || 0
         this.bullets = []
-        this.scale = scale
+        this.scale = scale ?? .8
         this.onAttack = false
-        this.scattering = scattering
-        this.slowing = slowing
-        this.delay = delay
+        this.scattering = scattering ?? 0
+        this.slowing = slowing ?? 0
+        this.delay = delay ?? 0
         console.log(this.slowing, this.delay)
 
         this.shakeVar = shakeVar
