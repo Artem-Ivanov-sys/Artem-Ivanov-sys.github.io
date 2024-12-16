@@ -311,9 +311,9 @@ function enemiesProceed() {
         if (enemies.length < enemiesMaxCount) {
             let side = Math.floor(Math.random()*4)
             let type = Math.random()
-            if (type < .0) {
+            if (type < .6) {
                 spawn_en_1(side)
-            } else if (type < 1.9) {
+            } else if (type < 1.1) {
                 if (activated_enemies[1]) {
                     spawn_en_2(side)
                 } else {
